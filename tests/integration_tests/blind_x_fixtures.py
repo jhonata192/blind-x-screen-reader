@@ -1,0 +1,302 @@
+# Blind-X #
+# Copyright 2026 Igalia, S.L.
+# Author: Joanmarie Diggs <jdiggs@igalia.com>
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the
+# Free Software Foundation, Inc., Franklin Street, Fifth Floor,
+# Boston MA  02110-1301 USA.
+
+"""Session-scoped fixtures that own an Blind-X subprocess for integration tests."""
+
+from __future__ import annotations
+
+import contextlib
+import shutil
+import subprocess
+import sys
+import time
+from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+import gi
+import pytest
+
+gi.require_version("Atspi", "2.0")
+from gi.repository import Atspi, GLib
+
+from blind_x.output_reader import OutputReader
+
+from .apps import chromium_browser, gtk3_text_view
+from .harness import sandbox
+from .harness.orca_session import BlindXSession
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+    from types import ModuleType
+
+_WEB_PAGES_DIR = Path(__file__).parent / "web_pages"
+
+
+@dataclass
+class NativeAppSession:
+    """Handle yielded by a native-app fixture: the Blind-X session and its output reader."""
+
+    blind_x: BlindXSession
+    reader: OutputReader
+
+
+@pytest.fixture(scope="session", name="blind-x")
+def _orca(tmp_path_factory: pytest.TempPathFactory) -> Iterator[BlindXSession]:
+    """Launches Blind-X as a subprocess for the test session and quits it at the end."""
+
+    sandbox_dir = tmp_path_factory.mktemp("blind-x-session")
+    env = sandbox.build_sandbox_env(sandbox_dir)
+    sandbox.write_sandbox_speechd_conf(sandbox_dir)
+
+    session = BlindXSession(env)
+    session.launch()
+    try:
+        yield session
+    finally:
+        session.quit()
+
+
+@pytest.fixture(scope="session", name="gtk3_text_view")
+def _gtk3_text_view(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[NativeAppSession]:
+    """Launches the gtk3_text_view test app with Blind-X and yields a NativeAppSession."""
+
+    yield from _run_native_app(
+        tmp_path_factory,
+        gtk3_text_view.__name__,
+        ready_predicate=_name_equals(gtk3_text_view.APP_TITLE),
+        lines=(
+            "Line one.",
+            "Line two has additional words to make it long enough that the text view wraps it.",
+            "Line three.",
+            "Line four also has extra words to push it past the wrap boundary in the view.",
+            "Last line.",
+        ),
+    )
+
+
+def _run_native_app(
+    tmp_path_factory: pytest.TempPathFactory,
+    app_module: str,
+    *,
+    ready_predicate: Callable[[Atspi.Accessible], bool],
+    lines: tuple[str, ...] = (),
+) -> Iterator[NativeAppSession]:
+    """Runs app_module under its own Blind-X subprocess and yields a NativeAppSession."""
+
+    sandbox_dir = tmp_path_factory.mktemp("blind-x-native-app")
+    extra_args: list[str] = []
+    if lines:
+        content_file = sandbox_dir / "app-content.txt"
+        content_file.write_text("\n".join(lines), encoding="utf-8")
+        extra_args = [str(content_file)]
+    argv = [sys.executable, "-m", app_module, *extra_args]
+    yield from _run_app_with_orca(sandbox_dir, argv=argv, ready_predicate=ready_predicate)
+
+
+def _run_app_with_orca(
+    sandbox_dir: Path,
+    *,
+    argv: list[str],
+    ready_predicate: Callable[[Atspi.Accessible], bool] | None = None,
+) -> Iterator[NativeAppSession]:
+    """Runs argv with Blind-X attached, yielding a NativeAppSession until teardown."""
+
+    speech_log = sandbox_dir / "speech.jsonl"
+    braille_log = sandbox_dir / "braille.jsonl"
+    env = sandbox.build_sandbox_env(sandbox_dir)
+    sandbox.write_sandbox_speechd_conf(sandbox_dir)
+
+    with _launch_subprocess(argv, env) as (_process, app_accessible):
+        if ready_predicate is not None:
+            _wait_until_ready(app_accessible, ready_predicate)
+        blind_x = BlindXSession(env)
+        blind_x.launch()
+        try:
+            blind_x.set("SpeechPresenter", "LogFile", str(speech_log))
+            blind_x.set("BraillePresenter", "LogFile", str(braille_log))
+            reader = OutputReader(str(speech_log), str(braille_log))
+            reader.start()
+            try:
+                yield NativeAppSession(blind_x=blind_x, reader=reader)
+            finally:
+                reader.stop()
+        finally:
+            blind_x.quit()
+
+
+@contextlib.contextmanager
+def _launch_subprocess(
+    argv: list[str],
+    env: dict[str, str],
+    *,
+    timeout: float = 30.0,
+    poll_interval: float = 0.05,
+) -> Iterator[tuple[subprocess.Popen, Atspi.Accessible]]:
+    """Spawns argv, waits for its pid to appear in AT-SPI, yields (process, app_accessible)."""
+
+    process = subprocess.Popen(argv, env=env)
+    try:
+        deadline = time.monotonic() + timeout
+        app_accessible: Atspi.Accessible | None = None
+        while time.monotonic() < deadline:
+            if (returncode := process.poll()) is not None:
+                raise RuntimeError(f"Test app {argv!r} exited early with code {returncode}")
+            app_accessible = _find_registered_application(process.pid)
+            if app_accessible is not None:
+                break
+            time.sleep(poll_interval)
+        if app_accessible is None:
+            raise TimeoutError(f"Test app {argv!r} did not appear in AT-SPI within {timeout}s")
+        yield process, app_accessible
+    finally:
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=2.0)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+
+
+def _find_registered_application(pid: int) -> Atspi.Accessible | None:
+    """Returns an accessible application with this pid, or None."""
+
+    try:
+        desktop = Atspi.get_desktop(0)
+        child_count = desktop.get_child_count()
+    except GLib.GError:
+        return None
+
+    for index in range(child_count):
+        try:
+            child = desktop.get_child_at_index(index)
+            child_pid = Atspi.Accessible.get_process_id(child)
+        except GLib.GError:
+            continue
+        if child_pid == pid:
+            return child
+    return None
+
+
+def _wait_until_ready(
+    app_accessible: Atspi.Accessible,
+    predicate: Callable[[Atspi.Accessible], bool],
+    timeout: float = 10.0,
+    poll_interval: float = 0.1,
+) -> None:
+    """Polls predicate(app_accessible) until True or raises TimeoutError."""
+
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            if predicate(app_accessible):
+                return
+        except GLib.GError:
+            pass
+        time.sleep(poll_interval)
+    raise TimeoutError(f"App {app_accessible!r} did not become ready within {timeout}s")
+
+
+def _name_equals(target: str) -> Callable[[Atspi.Accessible], bool]:
+    """Predicate: app accessible's name equals target."""
+
+    def predicate(accessible: Atspi.Accessible) -> bool:
+        return Atspi.Accessible.get_name(accessible) == target
+
+    return predicate
+
+
+def _name_suffix(suffix: str) -> Callable[[Atspi.Accessible], bool]:
+    """Predicate: app accessible or any direct child has a name ending with suffix."""
+
+    def predicate(accessible: Atspi.Accessible) -> bool:
+        if (name := Atspi.Accessible.get_name(accessible)) and name.endswith(suffix):
+            return True
+        for index in range(accessible.get_child_count()):
+            child_name = Atspi.Accessible.get_name(accessible.get_child_at_index(index))
+            if child_name and child_name.endswith(suffix):
+                return True
+        return False
+
+    return predicate
+
+
+def _resolve_binary(names: tuple[str, ...]) -> str | None:
+    """Returns the first of names that resolves on PATH, or None."""
+
+    for name in names:
+        if path := shutil.which(name):
+            return path
+    return None
+
+
+def _run_browser_session(
+    tmp_path_factory: pytest.TempPathFactory,
+    *,
+    app: ModuleType,
+    page: str,
+) -> Iterator[NativeAppSession]:
+    """Launches app loading web_pages/<page> under its own Blind-X subprocess."""
+
+    binary = _resolve_binary(app.BINARY_NAMES)
+    if binary is None:
+        pytest.skip(f"{app.__name__}: no binary found among {app.BINARY_NAMES!r}")
+
+    source_page = _WEB_PAGES_DIR / page
+    if not source_page.is_file():
+        raise FileNotFoundError(f"Test page not found: {source_page}")
+
+    sandbox_dir = tmp_path_factory.mktemp("blind-x-browser")
+    page_path = sandbox_dir / page
+    page_path.write_bytes(source_page.read_bytes())
+    profile_dir = sandbox_dir / "browser-profile"
+    profile_dir.mkdir()
+    argv = [
+        sys.executable,
+        "-m",
+        app.__name__,
+        f"file://{page_path}",
+        str(profile_dir),
+        binary,
+    ]
+    yield from _run_app_with_orca(
+        sandbox_dir,
+        argv=argv,
+        ready_predicate=_name_suffix(app.READY_SUFFIX),
+    )
+
+
+_BROWSER_APPS: dict[str, ModuleType] = {"chromium": chromium_browser}
+
+
+@pytest.fixture(scope="session", name="web_basic", params=["chromium"])
+def _web_basic(
+    request: pytest.FixtureRequest,
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[NativeAppSession]:
+    """Launches a browser loading web_basic.html with Blind-X; yields a NativeAppSession."""
+
+    yield from _run_browser_session(
+        tmp_path_factory,
+        app=_BROWSER_APPS[request.param],
+        page="web_basic.html",
+    )

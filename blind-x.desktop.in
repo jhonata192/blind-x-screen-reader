@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Blind-X Screen Reader
+Exec=blind-x
+Icon=blind-x
+NoDisplay=true

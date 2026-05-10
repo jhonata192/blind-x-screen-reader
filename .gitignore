@@ -1,0 +1,13 @@
+debug.out
+*.out
+core
+bld
+*~
+patch.*
+[0-9][0-9][0-9][0-9][-]*
+__pycache__/
+*.pyc
+subprojects/*/
+!subprojects/*.wrap
+!subprojects/packagefiles/
+!subprojects/packagefiles/mathcat-py/
