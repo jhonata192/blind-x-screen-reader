@@ -12,6 +12,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: opensuse/tumbleweed
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,13 +25,15 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y meson ninja-build python3-pip \
-            python3-gi python3-gi-cairo python3-dasbus \
-            libatspi2.0-dev libatk-bridge2.0-dev libgirepository1.0-dev \
-            libgtk-3-dev gettext itstool libxml2-dev libxslt1-dev \
+          zypper -n install --no-recommends \
+            meson ninja python3 python3-pip \
+            python3-gobject-devel python3-dasbus \
+            at-spi2-core-devel at-spi2-atk-devel \
+            gobject-introspection-devel gtk3-devel \
+            gettext-tools itstool libxml2-devel libxslt-devel \
             python3-brlapi python3-louis python3-psutil python3-speechd \
-            cargo
+            glib2-devel gsettings-desktop-schemas \
+            systemd-devel dpkg cargo
 
       - name: Configure meson
         run: meson setup _build -Dmathcat=false
