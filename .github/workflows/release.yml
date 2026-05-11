@@ -38,7 +38,7 @@ jobs:
             systemd-devel dpkg cargo
 
       - name: Configure meson
-        run: meson setup _build -Dmathcat=false
+        run: meson setup _build --prefix=/usr -Dmathcat=false
 
       - name: Build
         run: ninja -C _build
