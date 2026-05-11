@@ -1,0 +1,24 @@
+#!/bin/bash
+# Toggle Blind-X Screen Reader on/off
+#
+# When Blind-X is running: quits it.
+# When Blind-X is not running: starts it.
+#
+# Register this script as a custom keyboard shortcut in GNOME:
+#   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:\
+#     /org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/blind-x-toggle/\
+#     name "Toggle Blind-X"
+#   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:\
+#     /org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/blind-x-toggle/\
+#     command "/path/to/blind-x-toggle"
+#   gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:\
+#     /org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/blind-x-toggle/\
+#     binding "<Primary><Alt>n"
+
+BLIND_X_PID=$(pgrep -f "blind-x$" | head -1)
+
+if [ -n "$BLIND_X_PID" ]; then
+    pkill -f "blind-x$"
+else
+    blind-x &
+fi

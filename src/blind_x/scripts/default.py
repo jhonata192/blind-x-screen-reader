@@ -161,6 +161,7 @@ class Script(script.Script):
         kb_8_orca = keybindings.KeyBinding("8", keybindings.ORCA_MODIFIER_MASK)
         kb_space_orca = keybindings.KeyBinding("space", keybindings.ORCA_MODIFIER_MASK)
         kb_space_ctrl_orca = keybindings.KeyBinding("space", keybindings.ORCA_CTRL_MODIFIER_MASK)
+        kb_ctrl_alt_n = keybindings.KeyBinding("n", keybindings.CTRL_ALT_MODIFIER_MASK)
 
         script_commands: list[
             tuple[
@@ -213,7 +214,7 @@ class Script(script.Script):
                 None,
                 None,
             ),
-            ("shutdownHandler", self.quit_blind_x, cmdnames.QUIT_ORCA, None, None),
+            ("shutdownHandler", self.quit_blind_x, cmdnames.QUIT_ORCA, kb_ctrl_alt_n, kb_ctrl_alt_n),
             (
                 "preferencesSettingsHandler",
                 self.show_preferences_gui,
