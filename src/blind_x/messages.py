@@ -24,8 +24,8 @@ have been put in their own module so that we can present them in
 the correct language when users change the synthesizer language
 on the fly without having to reload a bunch of modules."""
 
-from .orca_i18n import C_, _, ngettext  # pylint: disable=import-error
-from .orca_platform import version  # pylint: disable=import-error
+from .blind_x_i18n import C_, _, ngettext  # pylint: disable=import-error
+from .blind_x_platform import version  # pylint: disable=import-error
 
 # Translators: Blind-X has a command to report the battery status. This message
 # is presented to the user when they use this command but Blind-X was unable to

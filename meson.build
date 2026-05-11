@@ -128,6 +128,17 @@ i18n.merge_file(
   install_dir: get_option('sysconfdir') / 'xdg' / 'autostart',
 )
 
+install_data(
+    'debian/postinst',
+    install_dir: get_option('datadir') / 'blind-x' / 'deb',
+    install_mode: 'rwxr-xr-x',
+)
+install_data(
+    'debian/postrm',
+    install_dir: get_option('datadir') / 'blind-x' / 'deb',
+    install_mode: 'rwxr-xr-x',
+)
+
 gnome.post_install(
   glib_compile_schemas: true,
   gtk_update_icon_cache: true,

@@ -258,7 +258,7 @@ class ExtensionLoader:
     def _load_from_file(filepath: str, filename: str) -> Extension | None:
         """Loads an Extension subclass from a Python file."""
 
-        module_name = f"orca_user_extension.{filename[:-3]}"
+        module_name = f"blind_x_user_extension.{filename[:-3]}"
         try:
             spec = importlib.util.spec_from_file_location(module_name, filepath)
             if spec is None or spec.loader is None:

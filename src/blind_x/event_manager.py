@@ -43,7 +43,7 @@ from . import (
     focus_manager,
     input_event,
     input_event_manager,
-    orca_modifier_manager,
+    blind_x_modifier_manager,
     script_manager,
     systemd,
 )
@@ -126,7 +126,7 @@ class EventManager:
             return
 
         input_event_manager.get_manager().start_key_watcher()
-        orca_modifier_manager.get_manager().add_grabs_for_blind_x_modifiers()
+        blind_x_modifier_manager.get_manager().add_grabs_for_blind_x_modifiers()
         self._active = True
         debug.print_message(debug.LEVEL_INFO, "EVENT MANAGER: Activated", True)
 

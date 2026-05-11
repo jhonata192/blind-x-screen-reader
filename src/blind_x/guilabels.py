@@ -23,7 +23,7 @@
 can present them in the correct language when users change the language on the
 fly without having to reload a bunch of modules."""
 
-from .orca_i18n import C_, _, ngettext  # pylint: disable=import-error
+from .blind_x_i18n import C_, _, ngettext  # pylint: disable=import-error
 
 # Translators: This string appears on a button in a dialog. "Activating" the
 # selected item will perform the action that one would expect to occur if the

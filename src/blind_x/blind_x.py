@@ -48,7 +48,7 @@ from . import (
     focus_manager,
     messages,
     mouse_review,
-    orca_modifier_manager,
+    blind_x_modifier_manager,
     presentation_manager,
     script_manager,
     systemd,
@@ -82,7 +82,7 @@ def load_user_settings(script=None, skip_reload_message=False, is_reload=True):
         mouse_reviewer.activate()
 
     # Handle the case where a change was made in the Blind-X Preferences dialog.
-    orca_modifier_manager.get_manager().refresh_blind_x_modifiers("Loading user settings.")
+    blind_x_modifier_manager.get_manager().refresh_blind_x_modifiers("Loading user settings.")
     event_manager.get_manager().pause_queuing(False, False, "User settings loaded.")
     debug.print_message(debug.LEVEL_INFO, "BLIND-X: User Settings Loaded", True)
 
@@ -116,7 +116,7 @@ def shutdown(_event=None, _signum=None):
     manager.present_message(messages.STOP_ORCA)
 
     dbus_service.get_remote_controller().shutdown()
-    orca_modifier_manager.get_manager().unset_blind_x_modifiers("Shutting down.")
+    blind_x_modifier_manager.get_manager().unset_blind_x_modifiers("Shutting down.")
 
     # Pause event queuing first so that it clears its queue and will not accept new
     # events. Then let the script manager unregister script event listeners as well

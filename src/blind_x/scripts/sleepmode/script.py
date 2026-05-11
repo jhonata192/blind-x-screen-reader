@@ -32,7 +32,7 @@ from blind_x import (
     debug,
     focus_manager,
     messages,
-    orca_modifier_manager,
+    blind_x_modifier_manager,
     presentation_manager,
     script,
     sleep_mode_manager,
@@ -57,7 +57,7 @@ class Script(script.Script):
         debug.print_tokens(debug.LEVEL_INFO, tokens, True)
         exceptions = frozenset({sleep_mode_manager.SleepModeManager.COMMAND_NAME})
         command_manager.get_manager().set_all_suspended(True, exceptions)
-        orca_modifier_manager.get_manager().unset_blind_x_modifiers("Entering sleep mode.")
+        blind_x_modifier_manager.get_manager().unset_blind_x_modifiers("Entering sleep mode.")
 
     def deactivate(self) -> None:
         """Called when this script is deactivated."""
@@ -65,7 +65,7 @@ class Script(script.Script):
         tokens = ["SLEEP MODE: De-activating script for", self.app]
         debug.print_tokens(debug.LEVEL_INFO, tokens, True)
         command_manager.get_manager().set_all_suspended(False)
-        orca_modifier_manager.get_manager().refresh_blind_x_modifiers("Leaving sleep mode.")
+        blind_x_modifier_manager.get_manager().refresh_blind_x_modifiers("Leaving sleep mode.")
 
     def locus_of_focus_changed(
         self,

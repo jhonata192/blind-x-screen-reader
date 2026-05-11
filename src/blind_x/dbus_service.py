@@ -37,7 +37,7 @@ from gi.repository import GLib
 
 from . import (  # pylint: disable=no-name-in-module
     debug,
-    orca_platform,
+    blind_x_platform,
 )
 
 
@@ -591,9 +591,9 @@ class BlindXDBusServiceInterface(Publishable):
     def GetVersion(self) -> str:  # pylint: disable=invalid-name
         """Returns Blind-X's version and revision if available."""
 
-        result = orca_platform.version
-        if orca_platform.revision:
-            result += f" (rev {orca_platform.revision})"
+        result = blind_x_platform.version
+        if blind_x_platform.revision:
+            result += f" (rev {blind_x_platform.revision})"
         msg = f"DBUS SERVICE: GetVersion called, returning: {result}"
         debug.print_message(debug.LEVEL_INFO, msg, True)
         return result

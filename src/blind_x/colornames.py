@@ -24,7 +24,7 @@
 
 import re
 
-from .orca_i18n import C_  # pylint: disable=import-error
+from .blind_x_i18n import C_  # pylint: disable=import-error
 
 css_names = {}
 

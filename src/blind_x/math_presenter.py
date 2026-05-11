@@ -34,7 +34,7 @@ from . import (  # pylint: disable=no-name-in-module
     debug,
     gsettings_registry,
     guilabels,
-    orca_platform,
+    blind_x_platform,
     preferences_grid_base,
 )
 from .ax_utilities_math import AXUtilitiesMath
@@ -219,7 +219,7 @@ class MathPresenter(Extension):
     def _find_rules_dir(self) -> str:
         """Returns the path to the MathCAT Rules directory, or empty string if not found."""
 
-        if configured_dir := orca_platform.mathcat_rules_dir:
+        if configured_dir := blind_x_platform.mathcat_rules_dir:
             if os.path.isdir(configured_dir):
                 return configured_dir
 

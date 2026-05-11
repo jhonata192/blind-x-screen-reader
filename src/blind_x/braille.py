@@ -46,7 +46,7 @@ from .ax_hypertext import AXHypertext
 from .ax_object import AXObject
 from .ax_text import AXText, AXTextAttribute
 from .ax_utilities import AXUtilities
-from .orca_platform import tablesdir  # pylint: disable=import-error
+from .blind_x_platform import tablesdir  # pylint: disable=import-error
 
 try:
     import brlapi as BRLAPI

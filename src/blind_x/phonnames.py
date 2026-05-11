@@ -18,7 +18,7 @@
 
 """Dictionary of phonetic names for letters of the alphabet."""
 
-from .orca_i18n import _  # pylint: disable=import-error
+from .blind_x_i18n import _  # pylint: disable=import-error
 
 # Translators: this is a structure to assist in the generation of
 # spoken military-style spelling.  For example, 'abc' becomes 'alpha

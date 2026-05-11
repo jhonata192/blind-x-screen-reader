@@ -31,7 +31,7 @@ from . import (
     input_event,
     keybindings,
     messages,
-    orca_modifier_manager,
+    blind_x_modifier_manager,
     presentation_manager,
 )
 from .command import Command, KeyboardCommand
@@ -83,7 +83,7 @@ class BypassModeManager(Extension):
                 presentation_manager.get_manager().present_message(messages.BYPASS_MODE_DISABLED)
             reason = "bypass mode disabled"
             manager.set_all_suspended(False)
-            orca_modifier_manager.get_manager().refresh_blind_x_modifiers(reason)
+            blind_x_modifier_manager.get_manager().refresh_blind_x_modifiers(reason)
             return True
 
         if event is not None:
@@ -91,7 +91,7 @@ class BypassModeManager(Extension):
 
         reason = "bypass mode enabled"
         manager.set_all_suspended(True, frozenset({self.COMMAND_NAME}))
-        orca_modifier_manager.get_manager().unset_blind_x_modifiers(reason)
+        blind_x_modifier_manager.get_manager().unset_blind_x_modifiers(reason)
 
         return True
 

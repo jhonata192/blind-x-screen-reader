@@ -47,7 +47,7 @@ from . import (
     keybindings,
     keynames,
     messages,
-    orca_modifier_manager,
+    blind_x_modifier_manager,
     presentation_manager,
     script_manager,
 )
@@ -389,7 +389,7 @@ class KeyboardEvent(InputEvent):
         if self._is_keypad_key() and self.modifiers & (1 << Atspi.ModifierType.NUMLOCK):
             self._is_kp_with_numlock = True
 
-        modifier_manager = orca_modifier_manager.get_manager()
+        modifier_manager = blind_x_modifier_manager.get_manager()
         if self.is_blind_x_modifier():
             modifier_manager.set_pressed_state(pressed)
         if modifier_manager.get_pressed_state():
@@ -522,9 +522,9 @@ class KeyboardEvent(InputEvent):
         """Return True if this is the Blind-X modifier key."""
 
         if self.id == Gdk.KEY_KP_0 and self.modifiers & keybindings.SHIFT_MODIFIER_MASK:
-            return orca_modifier_manager.get_manager().is_blind_x_modifier("KP_Insert")
+            return blind_x_modifier_manager.get_manager().is_blind_x_modifier("KP_Insert")
 
-        return orca_modifier_manager.get_manager().is_blind_x_modifier(self.keyval_name)
+        return blind_x_modifier_manager.get_manager().is_blind_x_modifier(self.keyval_name)
 
     def is_blind_x_modified(self) -> bool:
         """Return True if this key is Blind-X modified."""
@@ -732,7 +732,7 @@ class KeyboardEvent(InputEvent):
 
         if self.is_blind_x_modifier():
             if self._click_count == 2:
-                orca_modifier_manager.get_manager().toggle_modifier(self)
+                blind_x_modifier_manager.get_manager().toggle_modifier(self)
 
         if self.is_pressed_key() and self.keyval_name == "Num_Lock":
             numlock_on = self.get_locking_state()

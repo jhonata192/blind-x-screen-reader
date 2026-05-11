@@ -48,7 +48,7 @@ from . import (
     live_region_presenter,
     messages,
     object_properties,
-    orca_gui_navlist,
+    blind_x_gui_navlist,
     presentation_manager,
     say_all_presenter,
     script_manager,
@@ -1066,7 +1066,7 @@ class StructuralNavigator(Extension):
             index = 0
 
         rows = [(obj, -1, *row_data_func(obj)) for obj in objects]
-        orca_gui_navlist.show_ui(dialog_title, column_headers, rows, index)
+        blind_x_gui_navlist.show_ui(dialog_title, column_headers, rows, index)
 
     def _determine_root_container(self, script: default.Script) -> Atspi.Accessible:
         mode = self.get_mode(script)

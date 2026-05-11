@@ -51,7 +51,7 @@ from . import (
     keybindings,
     keynames,
     messages,
-    orca_modifier_manager,
+    blind_x_modifier_manager,
     preferences_grid_base,
     presentation_manager,
     script_manager,
@@ -201,7 +201,7 @@ class KeybindingsPreferencesGrid(preferences_grid_base.PreferencesGridBase):
         if current_is_desktop != self._original_keyboard_layout_is_desktop:
             get_manager().load_keyboard_layout(self._original_keyboard_layout_is_desktop)
 
-        orca_modifier_manager.get_manager().set_modifier_keys_override(None)
+        blind_x_modifier_manager.get_manager().set_modifier_keys_override(None)
 
     def _populate_keybindings(self) -> None:
         """Build categories dictionary and populate the categories list."""
@@ -413,7 +413,7 @@ class KeybindingsPreferencesGrid(preferences_grid_base.PreferencesGridBase):
 
         def on_key_release(_widget: Gtk.Widget, event: Gdk.EventKey) -> bool:
             event_string = Gdk.keyval_name(event.keyval)
-            orca_mods = orca_modifier_manager.get_manager().get_blind_x_modifier_keys()
+            orca_mods = blind_x_modifier_manager.get_manager().get_blind_x_modifier_keys()
             if event_string in orca_mods:
                 self._orca_modifier_pressed_during_capture = False
             return False
@@ -504,7 +504,7 @@ class KeybindingsPreferencesGrid(preferences_grid_base.PreferencesGridBase):
         assert script
         presentation_manager.get_manager().present_message(messages.KB_ENTER_NEW_KEY)
         self._saved_commands = get_manager().get_keyboard_commands()
-        orca_modifier_manager.get_manager().remove_grabs_for_blind_x_modifiers()
+        blind_x_modifier_manager.get_manager().remove_grabs_for_blind_x_modifiers()
         get_manager().set_active_commands({}, "Capturing keys")
         ax_device_manager.get_manager().unmap_all_modifiers()
 
@@ -553,7 +553,7 @@ class KeybindingsPreferencesGrid(preferences_grid_base.PreferencesGridBase):
                     GLib.idle_add(present_confirmation)
 
         get_manager().set_active_commands(self._saved_commands, "Done capturing keys")
-        orca_modifier_manager.get_manager().add_grabs_for_blind_x_modifiers()
+        blind_x_modifier_manager.get_manager().add_grabs_for_blind_x_modifiers()
 
         binding = command.get_keybinding()
         binding_text = self._format_keybinding_text(binding) or ""
@@ -620,7 +620,7 @@ class KeybindingsPreferencesGrid(preferences_grid_base.PreferencesGridBase):
         event_string = Gdk.keyval_name(entries[0])
         event_state = event.state
 
-        orca_mods = orca_modifier_manager.get_manager().get_blind_x_modifier_keys()
+        orca_mods = blind_x_modifier_manager.get_manager().get_blind_x_modifier_keys()
         if event_string in orca_mods:
             self._orca_modifier_pressed_during_capture = True
             self._captured_key = ("", keybindings.ORCA_MODIFIER_MASK, 0)
@@ -834,7 +834,7 @@ class KeybindingsPreferencesGrid(preferences_grid_base.PreferencesGridBase):
             Gtk.main_iteration()
 
         saved_commands = get_manager().get_keyboard_commands()
-        orca_modifier_manager.get_manager().remove_grabs_for_blind_x_modifiers()
+        blind_x_modifier_manager.get_manager().remove_grabs_for_blind_x_modifiers()
         get_manager().set_active_commands({}, "Capturing keys")
         ax_device_manager.get_manager().unmap_all_modifiers()
 
@@ -842,7 +842,7 @@ class KeybindingsPreferencesGrid(preferences_grid_base.PreferencesGridBase):
 
         entry.grab_remove()
         get_manager().set_active_commands(saved_commands, "Done capturing keys")
-        orca_modifier_manager.get_manager().add_grabs_for_blind_x_modifiers()
+        blind_x_modifier_manager.get_manager().add_grabs_for_blind_x_modifiers()
 
         self._apply_dialog_key_capture(response, command)
 
@@ -980,7 +980,7 @@ class KeybindingsPreferencesGrid(preferences_grid_base.PreferencesGridBase):
                 for primary_key, switch in self._modifier_switches.items():
                     switch.set_active(primary_key in saved_keys)
                 self._initializing = False
-                orca_modifier_manager.get_manager().set_modifier_keys_override(
+                blind_x_modifier_manager.get_manager().set_modifier_keys_override(
                     self._get_selected_modifier_keys(),
                 )
 
@@ -1008,7 +1008,7 @@ class KeybindingsPreferencesGrid(preferences_grid_base.PreferencesGridBase):
             switch.set_active(True)
             return
 
-        orca_modifier_manager.get_manager().set_modifier_keys_override(selected)
+        blind_x_modifier_manager.get_manager().set_modifier_keys_override(selected)
         self._has_unsaved_changes = True
 
     def _format_keybinding_text(self, kb: keybindings.KeyBinding | None) -> str | None:
@@ -1243,7 +1243,7 @@ class CommandManager:  # pylint: disable=too-many-instance-attributes
 
         self.load_keyboard_layout()
 
-        mod_mgr = orca_modifier_manager.get_manager()
+        mod_mgr = blind_x_modifier_manager.get_manager()
         if not mod_mgr.needs_modifier_refresh():
             return
 
@@ -1276,7 +1276,7 @@ class CommandManager:  # pylint: disable=too-many-instance-attributes
             "keyboard-layout",
             "desktop" if new_is_desktop else "laptop",
         )
-        orca_modifier_manager.get_manager().set_modifiers_for_layout()
+        blind_x_modifier_manager.get_manager().set_modifiers_for_layout()
         self.set_keyboard_layout_is_desktop(new_is_desktop)
 
         if script is not None and notify_user:
@@ -1321,7 +1321,7 @@ class CommandManager:  # pylint: disable=too-many-instance-attributes
         msg = f"COMMAND MANAGER: Updating NumLock grabs. NumLock is on: {self._numlock_on}."
         debug.print_message(debug.LEVEL_INFO, msg, True)
 
-        blind_x_modifiers = orca_modifier_manager.get_manager().get_blind_x_modifier_keys()
+        blind_x_modifiers = blind_x_modifier_manager.get_manager().get_blind_x_modifier_keys()
 
         def update_grabs() -> bool:
             for cmd in self._keyboard_commands.values():
@@ -1607,7 +1607,7 @@ class CommandManager:  # pylint: disable=too-many-instance-attributes
 
         self._group_enabled[group_label] = enabled
 
-        blind_x_modifiers = orca_modifier_manager.get_manager().get_blind_x_modifier_keys()
+        blind_x_modifiers = blind_x_modifier_manager.get_manager().get_blind_x_modifier_keys()
         added_count = 0
         removed_count = 0
 
@@ -1642,7 +1642,7 @@ class CommandManager:  # pylint: disable=too-many-instance-attributes
     def set_group_suspended(self, group_label: str, suspended: bool) -> None:
         """Sets the suspended state for all commands in a group."""
 
-        blind_x_modifiers = orca_modifier_manager.get_manager().get_blind_x_modifier_keys()
+        blind_x_modifiers = blind_x_modifier_manager.get_manager().get_blind_x_modifier_keys()
         added_count = 0
         removed_count = 0
 
@@ -1680,7 +1680,7 @@ class CommandManager:  # pylint: disable=too-many-instance-attributes
                 cmd.get_name() for cmd in self._keyboard_commands.values() if cmd.is_suspended()
             }
 
-        blind_x_modifiers = orca_modifier_manager.get_manager().get_blind_x_modifier_keys()
+        blind_x_modifiers = blind_x_modifier_manager.get_manager().get_blind_x_modifier_keys()
         added_count = 0
         removed_count = 0
 
@@ -1740,7 +1740,7 @@ class CommandManager:  # pylint: disable=too-many-instance-attributes
     ) -> None:
         """Updates grabs based on diff between old and new binding maps."""
 
-        blind_x_modifiers = orca_modifier_manager.get_manager().get_blind_x_modifier_keys()
+        blind_x_modifiers = blind_x_modifier_manager.get_manager().get_blind_x_modifier_keys()
         removed: list[tuple[str, int, int]] = []
         added: list[tuple[str, int, int]] = []
         transferred: list[tuple[str, int, int]] = []

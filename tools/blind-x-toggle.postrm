@@ -1,0 +1,22 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+    remove|purge)
+        if [ -n "$SUDO_USER" ]; then
+            export DISPLAY=:0
+            export XDG_RUNTIME_DIR="/run/user/$(id -u "$SUDO_USER")"
+
+            KEY_PATH='/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/blind-x-toggle/'
+
+            CURRENT=$(gsettings get org.gnome.settings-daemon.plugins.media-keys custom-keybindings 2>/dev/null)
+            if [ -n "$CURRENT" ] && echo "$CURRENT" | grep -qF "$KEY_PATH"; then
+                NEW=$(echo "$CURRENT" | sed "s|'$KEY_PATH', ||g; s|, '$KEY_PATH']|]|g; s|'$KEY_PATH']|]|g")
+                gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "$NEW" 2>/dev/null || true
+            fi
+        fi
+        ;;
+    upgrade|abort-install|abort-upgrade|disappear)
+        exit 0
+        ;;
+esac

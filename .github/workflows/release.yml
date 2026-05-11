@@ -58,20 +58,19 @@ jobs:
           cat > _deb/DEBIAN/control << EOF
           Package: $PKG_NAME
           Version: $PKG_VERSION
-          Section: x11
+          Section: accessibilité
           Priority: optional
           Architecture: $ARCH
-          Maintainer: Blind-X Team
-          Depends: python3 (>= 3.10), python3-gi (>= 3.18), python3-dasbus,
-           libatspi2.0-0 (>= 2.56.0), libatk-bridge2.0-0 (>= 2.56.0),
-           gir1.2-gtk-3.0 (>= 3.24), python3-speechd
-          Description: Blind-X Screen Reader
-           A free, open source screen reader for the GNOME desktop
-           that provides access to the graphical desktop via speech and braille.
+          Maintainer: Jhonata <jhonata192@disroot.org>
+          Depends: python3 (>= 3.10), gir1.2-gtk-3.0, gir1.2-atspi-2.0, at-spi2-core, python3-dasbus
+          Description: Screen reader for GNOME
+           Blind-X is a free and open source screen reader for GNOME.
+           It provides access to the desktop via speech and braille.
           EOF
 
           cp tools/blind-x-toggle.postinst _deb/DEBIAN/postinst
-          chmod 755 _deb/DEBIAN/postinst
+          cp tools/blind-x-toggle.postrm _deb/DEBIAN/postrm
+          chmod 755 _deb/DEBIAN/postinst _deb/DEBIAN/postrm
 
           cp -r _install/* _deb/
 

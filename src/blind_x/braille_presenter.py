@@ -49,7 +49,7 @@ from . import (
 from .braille_generator import BrailleGeneratorContext
 from .command import Command, KeyboardCommand
 from .extension import Extension
-from .orca_platform import tablesdir  # pylint: disable=import-error
+from .blind_x_platform import tablesdir  # pylint: disable=import-error
 
 if TYPE_CHECKING:
     import gi

@@ -18,7 +18,7 @@
 
 """Dictionaries of localized text attribute names and values."""
 
-from .orca_i18n import C_  # pylint: disable=import-error
+from .blind_x_i18n import C_  # pylint: disable=import-error
 
 attribute_names = {}
 

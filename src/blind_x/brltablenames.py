@@ -28,7 +28,7 @@ These are in their own module so that we can present them in the correct
 language when users change the synthesizer language on the fly without
 having to reload a bunch of modules."""
 
-from .orca_i18n import _  # pylint: disable=import-error
+from .blind_x_i18n import _  # pylint: disable=import-error
 
 TABLE_NAMES: dict[str, str] = {
     # Translators: This is the name of a braille translation table

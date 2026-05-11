@@ -24,7 +24,7 @@ have been put in their own module so that we can present them in
 the correct language when users change the synthesizer language
 on the fly without having to reload a bunch of modules."""
 
-from .orca_i18n import C_, _  # pylint: disable=import-error
+from .blind_x_i18n import C_, _  # pylint: disable=import-error
 
 # Translators: this command will move the mouse pointer to the current item,
 # typically a widget, without clicking on it.

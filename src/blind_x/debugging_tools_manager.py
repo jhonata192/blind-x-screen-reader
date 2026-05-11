@@ -39,7 +39,7 @@ from . import (  # pylint: disable=no-name-in-module
     guilabels,
     input_event,
     messages,
-    orca_platform,
+    blind_x_platform,
     presentation_manager,
 )
 from .ax_object import AXObject
@@ -187,9 +187,9 @@ class DebuggingToolsManager(Extension):
     def print_session_details(self, is_command_line: bool = False) -> None:
         """Prints basic details about the current session."""
 
-        msg = f"Blind-X version {orca_platform.version}"
-        if orca_platform.revision:
-            msg += f" (rev {orca_platform.revision})"
+        msg = f"Blind-X version {blind_x_platform.version}"
+        if blind_x_platform.revision:
+            msg += f" (rev {blind_x_platform.revision})"
 
         atspi_version = Atspi.get_version()  # pylint: disable=no-value-for-parameter
         msg += f", AT-SPI2 version: {atspi_version[0]}.{atspi_version[1]}.{atspi_version[2]}"
