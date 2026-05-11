@@ -73,6 +73,7 @@ jobs:
           chmod 755 _deb/DEBIAN/postinst _deb/DEBIAN/postrm
 
           cp -r _install/* _deb/
+          chmod 755 _deb/usr/bin/blind-x _deb/usr/bin/blind-x-toggle
 
           dpkg-deb --build _deb
 
