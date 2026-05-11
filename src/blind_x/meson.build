@@ -14,7 +14,7 @@ configure_file(
 
 orca_i18n_py = configure_file(
   input: 'blind_x_i18n.py.in',
-  output: '@BASENAME@',
+  output: 'orca_i18n.py',
   configuration: {
     'GETTEXT_PACKAGE': meson.project_name(),
     'localedir': get_option('localedir'),
@@ -38,7 +38,7 @@ louis_tables_dir = liblouis_dep.get_variable(
 
 orca_platform_py = configure_file(
   input: 'blind_x_platform.py.in',
-  output: '@BASENAME@',
+  output: 'orca_platform.py',
   configuration: {
     'datadir': get_option('datadir'),
     'prefix': get_option('prefix'),

@@ -2,8 +2,8 @@ name: Build and Release .deb
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -12,27 +12,33 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: opensuse/tumbleweed
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: true
 
       - name: Read version
         id: version
-        run: echo "BLINDX_VERSION=$(cat version.txt)" >> $GITHUB_ENV
+        run: |
+          BASE_VER=$(cat version.txt)
+          FULL_VER="${BASE_VER}.${GITHUB_RUN_NUMBER}"
+          echo "BLINDX_VERSION=$FULL_VER" >> $GITHUB_ENV
+          echo "TAG=v$FULL_VER" >> $GITHUB_ENV
 
       - name: Install build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y meson ninja-build python3-pip \
-            python3-gi python3-gi-cairo python3-dasbus \
-            libatspi2.0-dev libatk-bridge2.0-dev libgirepository1.0-dev \
-            libgtk-3-dev gettext itstool libxml2-dev libxslt1-dev \
+          zypper -n install --no-recommends \
+            meson ninja python3 python3-pip \
+            python3-gobject-devel python3-dasbus \
+            at-spi2-core-devel at-spi2-atk-devel \
+            gobject-introspection-devel gtk3-devel \
+            gettext-tools itstool libxml2-devel libxslt-devel \
             python3-brlapi python3-louis python3-psutil python3-speechd \
-            cargo
+            glib2-devel gsettings-desktop-schemas \
+            systemd-devel dpkg cargo
 
       - name: Configure meson
-        run: meson setup _build -Dmathcat=false
+        run: meson setup _build --prefix=/usr -Dmathcat=false
 
       - name: Build
         run: ninja -C _build
@@ -52,19 +58,22 @@ jobs:
           cat > _deb/DEBIAN/control << EOF
           Package: $PKG_NAME
           Version: $PKG_VERSION
-          Section: x11
+          Section: accessibilité
           Priority: optional
           Architecture: $ARCH
-          Maintainer: Blind-X Team
-          Depends: python3 (>= 3.10), python3-gi (>= 3.18), python3-dasbus,
-           libatspi2.0-0 (>= 2.56.0), libatk-bridge2.0-0 (>= 2.56.0),
-           gir1.2-gtk-3.0 (>= 3.24), python3-speechd
-          Description: Blind-X Screen Reader
-           A free, open source screen reader for the GNOME desktop
-           that provides access to the graphical desktop via speech and braille.
+          Maintainer: Jhonata <jhonata192@disroot.org>
+          Depends: python3 (>= 3.10), gir1.2-gtk-3.0, gir1.2-atspi-2.0, at-spi2-core, python3-dasbus
+          Description: Screen reader for GNOME
+           Blind-X is a free and open source screen reader for GNOME.
+           It provides access to the desktop via speech and braille.
           EOF
 
+          cp tools/blind-x-toggle.postinst _deb/DEBIAN/postinst
+          cp tools/blind-x-toggle.postrm _deb/DEBIAN/postrm
+          chmod 755 _deb/DEBIAN/postinst _deb/DEBIAN/postrm
+
           cp -r _install/* _deb/
+          chmod 755 _deb/usr/bin/blind-x _deb/usr/bin/blind-x-toggle 2>/dev/null || true
 
           dpkg-deb --build _deb
 
@@ -81,5 +90,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ env.TAG }}
+          name: ${{ env.TAG }}
           files: ${{ env.DEB_FILE }}
           generate_release_notes: true
