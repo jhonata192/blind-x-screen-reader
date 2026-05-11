@@ -142,6 +142,7 @@ subdir('icons')
 subdir('po')
 subdir('src')
 subdir('tests')
+subdir('tools')
 
 summary(summary)
 

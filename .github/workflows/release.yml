@@ -66,6 +66,32 @@ jobs:
            that provides access to the graphical desktop via speech and braille.
           EOF
 
+          cat > _deb/DEBIAN/postinst << 'PST_EOF'
+#!/bin/bash
+set -e
+
+case "$1" in
+    configure)
+        if [ -n "$SUDO_USER" ]; then
+            su "$SUDO_USER" -c "
+                KEY_PATH='/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/blind-x-toggle/'
+                gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:\${KEY_PATH} name 'Toggle Blind-X'
+                gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:\${KEY_PATH} command '/usr/bin/blind-x-toggle'
+                gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:\${KEY_PATH} binding '<Primary><Alt>n'
+                CURRENT=\$(gsettings get org.gnome.settings-daemon.plugins.media-keys custom-keybindings)
+                if echo \"\$CURRENT\" | grep -qF \"\$KEY_PATH\"; then
+                    true
+                else
+                    NEW=\$(echo \"\$CURRENT\" | sed \"s|]|, '\$KEY_PATH']|\")
+                    gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings \"\$NEW\"
+                fi
+            "
+        fi
+        ;;
+esac
+PST_EOF
+          chmod 755 _deb/DEBIAN/postinst
+
           cp -r _install/* _deb/
 
           dpkg-deb --build _deb
