@@ -6,7 +6,7 @@ configure_file(
   configuration: {
     'PYTHON': python3.full_path(),
     'prefix': get_option('prefix'),
-    'libdir': '/usr/local/lib/python3.14/dist-packages',
+    'libdir': 'python3.get_path(\'purelib\')',
   },
   install: true,
   install_dir: get_option('bindir'),
