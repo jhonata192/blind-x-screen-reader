@@ -48,7 +48,17 @@ except ImportError:
     HAS_CTYPES = False
 
 sys.prefix = "@prefix@"
-sys.path.insert(1, "@libdir@")
+
+# Detect site-packages path dynamically
+import site
+for p in site.getsitepackages():
+    import os
+    if os.path.isdir(os.path.join(p, 'blind_x')):
+        sys.path.insert(1, p)
+        break
+else:
+    import sysconfig
+    sys.path.insert(1, sysconfig.get_path('purelib'))
 
 _share_dir = os.path.join(sys.prefix, "share")
 if os.path.isdir(_share_dir):
