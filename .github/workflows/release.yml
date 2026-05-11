@@ -2,8 +2,8 @@ name: Build and Release .deb
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -19,7 +19,11 @@ jobs:
 
       - name: Read version
         id: version
-        run: echo "BLINDX_VERSION=$(cat version.txt)" >> $GITHUB_ENV
+        run: |
+          BASE_VER=$(cat version.txt)
+          FULL_VER="${BASE_VER}.${GITHUB_RUN_NUMBER}"
+          echo "BLINDX_VERSION=$FULL_VER" >> $GITHUB_ENV
+          echo "TAG=v$FULL_VER" >> $GITHUB_ENV
 
       - name: Install build dependencies
         run: |
@@ -86,5 +90,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ env.TAG }}
+          name: ${{ env.TAG }}
           files: ${{ env.DEB_FILE }}
           generate_release_notes: true
